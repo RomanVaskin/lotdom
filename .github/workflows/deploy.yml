@@ -1,0 +1,32 @@
+name: Deploy LotDom
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: lotdom-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to REG.RU VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -e
+            cd /opt/lotdom
+            git fetch origin main
+            git reset --hard origin/main
+            pnpm install --frozen-lockfile
+            pnpm build
+            systemctl restart lotdom
+            systemctl is-active --quiet lotdom
