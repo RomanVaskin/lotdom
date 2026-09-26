@@ -1,0 +1,27 @@
+export const property = {
+  slug: 'novaya-riga-dom-240',
+  auctionId: 'nr-240',
+  type: 'Современный дом',
+  location: 'Новая Рига',
+  address: 'Истринский г. о., КП у Новорижского шоссе, 32 км от МКАД',
+  startPrice: 38_000_000,
+  interested: 12,
+  nextViewing: '29 сентября',
+  auctionDate: '15 октября',
+  photos: [
+    { src: '/images/house-novaya-riga.png', alt: 'Фасад дома с панорамным остеклением у леса' },
+    { src: '/images/house-interior.png', alt: 'Гостиная со вторым светом и камином' },
+    { src: '/images/house-terrace.png', alt: 'Терраса с видом на участок и лес' },
+    { src: '/images/house-bedroom.png', alt: 'Мастер-спальня с окном в сосны' },
+  ],
+  specs: [
+    { label: 'Площадь дома', value: '240 м²' },
+    { label: 'Участок', value: '15 соток' },
+    { label: 'Спальни', value: '4' },
+    { label: 'Санузлы', value: '3' },
+    { label: 'Этажность', value: '2' },
+    { label: 'Год постройки', value: '2022' },
+    { label: 'Материал', value: 'Клеёный брус, стекло' },
+    { label: 'Коммуникации', value: 'Газ, электричество 30 кВт, скважина' },
+  ],
+}
