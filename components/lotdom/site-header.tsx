@@ -4,7 +4,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 const nav = [
-  { href: '/#lots', label: 'Лоты' },
+  { href: '/properties', label: 'Лоты' },
   { href: '/sell', label: 'Продать объект' },
   { href: '/#how', label: 'Как это работает' },
 ]
@@ -30,7 +30,7 @@ export function SiteHeader() {
             </ul>
           </nav>
         </div>
-        <Link href="#" className={cn(buttonVariants({ variant: 'outline' }), 'h-9 px-4')}>
+        <Link href="/login" className={cn(buttonVariants({ variant: 'outline' }), 'h-9 px-4')}>
           Войти
         </Link>
       </div>

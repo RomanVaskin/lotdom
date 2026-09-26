@@ -6,15 +6,20 @@ import { SiteHeader } from '@/components/lotdom/site-header'
 import { SiteFooter } from '@/components/lotdom/site-footer'
 import { StatusBadge } from '@/components/lotdom/status-badge'
 import { ViewingBooking } from '@/components/buyer/viewing-booking'
-import { formatRub, lots } from '@/lib/lots'
+import { formatRub, getLot, lots } from '@/lib/lots'
 
 export const metadata: Metadata = {
-  title: 'Запись на просмотр — ЛОТДОМ',
+  title: 'Запись на показ — ЛОТДОМ',
   description: 'Выберите удобную дату и время, чтобы посмотреть объект вместе с менеджером LotDom.',
 }
 
-export default function ViewingPage() {
-  const lot = lots[0]
+export default async function ViewingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const { lot: slug } = await searchParams
+  const lot = getLot(typeof slug === 'string' ? slug : undefined) ?? lots[0]
 
   return (
     <>
@@ -27,7 +32,7 @@ export default function ViewingPage() {
           >
             <ArrowLeft className="size-4" aria-hidden />К объекту
           </Link>
-          <h1 className="text-balance text-4xl font-medium tracking-tight md:text-5xl">Запись на просмотр</h1>
+          <h1 className="text-balance text-4xl font-medium tracking-tight md:text-5xl">Запись на показ</h1>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">

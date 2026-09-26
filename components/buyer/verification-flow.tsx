@@ -5,35 +5,54 @@ import Link from 'next/link'
 import { ArrowRight, Check, Clock, FileText, Lock, Upload } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { ObjectSummary } from '@/components/lotdom/object-summary'
-import type { Lot } from '@/lib/lots'
+import { formatRub, type Lot } from '@/lib/lots'
 import { cn } from '@/lib/utils'
 
-type Phase = 'idle' | 'reviewing' | 'passed'
+type Phase = 'idle' | 'uploaded' | 'reviewing' | 'passed'
 type ProofType = 'mortgage' | 'own'
 
-const proofOptions: { value: ProofType; title: string; hint: string }[] = [
+const proofOptions: { value: ProofType; title: string; hint: string; file: string }[] = [
   {
     value: 'mortgage',
     title: 'Одобрение ипотеки',
     hint: 'Решение банка с суммой одобренного кредита',
+    file: 'mortgage-approval.pdf',
   },
   {
     value: 'own',
     title: 'Подтверждение собственных средств',
     hint: 'Выписка со счёта или справка об остатке',
+    file: 'bank-statement.pdf',
   },
 ]
 
-export function VerificationFlow({ lot, auctionHref }: { lot: Lot; auctionHref: string }) {
+type Props = {
+  lot: Lot
+  /** Missing when the lot has no auction scheduled yet. */
+  auctionHref?: string
+  bidStep?: number
+  applicationDate: string
+  viewingDate: string
+}
+
+const phaseMeta: Record<Phase, string> = {
+  idle: 'Документ не загружен',
+  uploaded: 'Документ загружен',
+  reviewing: 'На проверке',
+  passed: 'Проверка пройдена',
+}
+
+export function VerificationFlow({ lot, auctionHref, bidStep, applicationDate, viewingDate }: Props) {
   const [phase, setPhase] = useState<Phase>('idle')
   const [proof, setProof] = useState<ProofType>('mortgage')
+  const file = proofOptions.find((o) => o.value === proof)!.file
 
   const steps = [
-    { title: 'Заявка отправлена', meta: '16 сентября', state: 'done' },
-    { title: 'Показ пройден', meta: '21 сентября', state: 'done' },
+    { title: 'Заявка отправлена', meta: applicationDate, state: 'done' },
+    { title: 'Показ', meta: viewingDate, state: 'done' },
     {
       title: 'Подтверждение средств',
-      meta: phase === 'passed' ? 'Проверка пройдена' : phase === 'reviewing' ? 'На проверке' : 'Требуется документ',
+      meta: phaseMeta[phase],
       state: phase === 'passed' ? 'done' : 'current',
     },
     {
@@ -119,15 +138,16 @@ export function VerificationFlow({ lot, auctionHref }: { lot: Lot; auctionHref: 
                 Проверка пройдена
               </h2>
               <p className="max-w-xl text-pretty leading-relaxed text-muted-foreground">
-                Вы допущены к торгам по объекту «{lot.type}, {lot.location}». Торги пройдут онлайн, ставки
-                делаются шагом от 250 000 ₽.
+                Вы допущены к торгам по объекту «{lot.type}, {lot.location}». Торги пройдут онлайн
+                {bidStep ? `, ставки делаются шагом от ${formatRub(bidStep)}` : ''}. Участники видят только
+                номера, без персональных данных.
               </p>
             </div>
             <dl className="grid w-full gap-px overflow-hidden rounded-xl bg-border ring-1 ring-border sm:grid-cols-3">
               {[
-                ['Документ', 'mortgage-approval.pdf'],
-                ['Решение', '27 сентября, 15:40'],
-                ['Старт торгов', '3 октября, 12:00'],
+                ['Документ', file],
+                ['Решение', '30 сентября, 15:40'],
+                ['Старт торгов', lot.auctionDate],
               ].map(([k, v]) => (
                 <div key={k} className="flex flex-col gap-1 bg-card p-4">
                   <dt className="text-sm text-muted-foreground">{k}</dt>
@@ -135,10 +155,21 @@ export function VerificationFlow({ lot, auctionHref }: { lot: Lot; auctionHref: 
                 </div>
               ))}
             </dl>
-            <Link href={auctionHref} className={cn(buttonVariants({ size: 'xl' }))}>
-              Перейти к аукциону
-              <ArrowRight aria-hidden />
-            </Link>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              {auctionHref ? (
+                <Link href={auctionHref} className={cn(buttonVariants({ size: 'xl' }))}>
+                  Перейти к аукциону
+                  <ArrowRight aria-hidden />
+                </Link>
+              ) : (
+                <p className="self-center text-sm text-muted-foreground">
+                  Ссылка на торги появится в кабинете перед стартом.
+                </p>
+              )}
+              <Link href="/buyer" className={cn(buttonVariants({ variant: 'outline', size: 'xl' }))}>
+                Кабинет покупателя
+              </Link>
+            </div>
           </div>
         ) : (
           <>
@@ -152,7 +183,7 @@ export function VerificationFlow({ lot, auctionHref }: { lot: Lot; auctionHref: 
               </p>
             </div>
 
-            <fieldset className="flex flex-col gap-3" disabled={phase === 'reviewing'}>
+            <fieldset className="flex flex-col gap-3" disabled={phase !== 'idle'}>
               <legend className="mb-3 text-sm font-medium">Способ подтверждения</legend>
               <div className="grid gap-3 sm:grid-cols-2">
                 {proofOptions.map((opt) => {
@@ -195,7 +226,7 @@ export function VerificationFlow({ lot, auctionHref }: { lot: Lot; auctionHref: 
             {phase === 'idle' ? (
               <button
                 type="button"
-                onClick={() => setPhase('reviewing')}
+                onClick={() => setPhase('uploaded')}
                 className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border bg-background px-6 py-10 text-center transition-colors outline-none hover:border-foreground/30 hover:bg-muted/60 focus-visible:ring-3 focus-visible:ring-ring/50"
               >
                 <span className="flex size-10 items-center justify-center rounded-full bg-card ring-1 ring-border">
@@ -211,23 +242,37 @@ export function VerificationFlow({ lot, auctionHref }: { lot: Lot; auctionHref: 
                     <FileText className="size-4" aria-hidden />
                   </span>
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <p className="truncate text-sm font-medium">mortgage-approval.pdf</p>
+                    <p className="truncate text-sm font-medium">{file}</p>
                     <p className="text-sm text-muted-foreground">1,2 МБ · загружен сегодня в 11:08</p>
                   </div>
                   <span className="inline-flex h-7 shrink-0 items-center gap-2 rounded-full bg-card px-3 text-xs font-medium ring-1 ring-border">
-                    <span aria-hidden className="size-1.5 rounded-full bg-brand" />
-                    На проверке
+                    <span
+                      aria-hidden
+                      className={cn('size-1.5 rounded-full', phase === 'reviewing' ? 'bg-brand' : 'bg-foreground')}
+                    />
+                    {phaseMeta[phase]}
                   </span>
                 </div>
-                <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="size-4" aria-hidden />
-                    Обычно до 1 рабочего дня
-                  </p>
-                  <Button variant="ghost" size="sm" onClick={() => setPhase('passed')}>
-                    Показать результат (демо)
-                  </Button>
-                </div>
+                {phase === 'uploaded' ? (
+                  <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+                    <Button variant="ghost" size="sm" onClick={() => setPhase('idle')}>
+                      Заменить документ
+                    </Button>
+                    <Button size="xl" onClick={() => setPhase('reviewing')}>
+                      Отправить на проверку
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Clock className="size-4" aria-hidden />
+                      Обычно до 1 рабочего дня
+                    </p>
+                    <Button variant="ghost" size="sm" onClick={() => setPhase('passed')}>
+                      Показать результат (демо)
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
 

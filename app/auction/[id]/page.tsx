@@ -1,21 +1,39 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import { ArrowUpRight } from 'lucide-react'
 import { SiteHeader } from '@/components/lotdom/site-header'
 import { SiteFooter } from '@/components/lotdom/site-footer'
 import { StatusBadge } from '@/components/lotdom/status-badge'
 import { AuctionRoom } from '@/components/auction/auction-room'
-import { auctions } from '@/lib/auctions'
+import { auctions, getAuction } from '@/lib/auctions'
+import { getLot } from '@/lib/lots'
 
-export const metadata: Metadata = {
-  title: 'Торги — ЛОТДОМ',
-  description: 'Открытые торги между допущенными покупателями.',
+type Params = { params: Promise<{ id: string }> }
+
+export function generateStaticParams() {
+  return Object.keys(auctions).map((id) => ({ id }))
 }
 
-export default async function AuctionPage({ params }: { params: Promise<{ id: string }> }) {
+export const dynamicParams = false
+
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { id } = await params
-  const auction = auctions[id] ?? auctions['nr-240']
+  const auction = getAuction(id)
+  return {
+    title: auction ? `Торги: ${auction.title}, ${auction.location} — ЛОТДОМ` : 'Торги — ЛОТДОМ',
+    description: 'Открытые торги между допущенными покупателями.',
+  }
+}
+
+export default async function AuctionPage({ params }: Params) {
+  const { id } = await params
+  const auction = getAuction(id)
+  if (!auction) notFound()
+  const lot = getLot(auction.propertySlug)
+  // The buyer demo reaches this room before the lot's auction date — say so instead of pretending it is live.
+  const scheduled = lot && lot.stage !== 'auction'
 
   return (
     <>
@@ -44,6 +62,13 @@ export default async function AuctionPage({ params }: { params: Promise<{ id: st
             </Link>
           </div>
         </div>
+
+        {scheduled && (
+          <p className="rounded-xl bg-muted/70 p-4 text-sm leading-relaxed text-muted-foreground">
+            Демонстрационный режим: торги по объекту начнутся {lot.auctionDate}. Так будет выглядеть комната
+            торгов для допущенного участника.
+          </p>
+        )}
 
         <AuctionRoom auction={auction} />
       </main>

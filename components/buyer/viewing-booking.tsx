@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { CalendarPlus, Check } from 'lucide-react'
+import { ArrowRight, CalendarPlus, Check } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -83,7 +83,7 @@ function icsHref(lot: Lot, iso: string, time: string) {
     'BEGIN:VEVENT',
     `DTSTART;TZID=Europe/Moscow:${stamp}`,
     `DTEND;TZID=Europe/Moscow:${end}`,
-    `SUMMARY:Просмотр: ${lot.type}, ${lot.location}`,
+    `SUMMARY:Показ: ${lot.type}, ${lot.location}`,
     'DESCRIPTION:ЛОТДОМ. Менеджер подтвердит детали по телефону.',
     'END:VEVENT',
     'END:VCALENDAR',
@@ -111,9 +111,12 @@ export function ViewingBooking({ lot }: { lot: Lot }) {
         </span>
         <div className="flex flex-col gap-2">
           <h2 id="confirmed-title" className="text-3xl font-medium tracking-tight">
-            Просмотр подтверждён
+            Показ подтверждён
           </h2>
-          <p className="text-muted-foreground">Менеджер подтвердит детали по телефону.</p>
+          <p className="text-muted-foreground">
+            Менеджер подтвердит детали по телефону. После показа подтвердите возможность покупки, чтобы
+            получить допуск к торгам.
+          </p>
         </div>
         <dl className="grid w-full gap-px overflow-hidden rounded-xl bg-border ring-1 ring-border sm:grid-cols-3">
           {[
@@ -127,18 +130,25 @@ export function ViewingBooking({ lot }: { lot: Lot }) {
             </div>
           ))}
         </dl>
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <Link href={`/properties/${lot.slug}`} className={cn(buttonVariants({ size: 'xl' }))}>
+            Вернуться к объекту
+          </Link>
+          <Link
+            href={`/buyer/verification?lot=${lot.slug}`}
+            className={cn(buttonVariants({ variant: 'outline', size: 'xl' }))}
+          >
+            Подтвердить средства
+            <ArrowRight aria-hidden />
+          </Link>
           <a
             href={icsHref(lot, date, time)}
             download="lotdom-viewing.ics"
-            className={cn(buttonVariants({ variant: 'outline', size: 'xl' }))}
+            className={cn(buttonVariants({ variant: 'ghost', size: 'xl' }))}
           >
             <CalendarPlus aria-hidden />
             Добавить в календарь
           </a>
-          <Link href={`/properties/${lot.slug}`} className={cn(buttonVariants({ variant: 'ghost', size: 'xl' }))}>
-            Вернуться к объекту
-          </Link>
         </div>
       </section>
     )
@@ -153,7 +163,7 @@ export function ViewingBooking({ lot }: { lot: Lot }) {
       className="flex flex-col gap-10 rounded-2xl bg-card p-6 ring-1 ring-border md:p-10"
     >
       <Step n={1} title="Дата">
-        <div role="radiogroup" aria-label="Дата просмотра" className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+        <div role="radiogroup" aria-label="Дата показа" className="grid grid-cols-3 gap-2 sm:grid-cols-6">
           {dates.map((d) => (
             <SlotButton
               key={d.iso}
@@ -177,7 +187,7 @@ export function ViewingBooking({ lot }: { lot: Lot }) {
       </Step>
 
       <Step n={2} title="Время">
-        <div role="radiogroup" aria-label="Время просмотра" className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+        <div role="radiogroup" aria-label="Время показа" className="grid grid-cols-3 gap-2 sm:grid-cols-5">
           {times.map((t) => {
             const isTaken = taken.includes(t)
             return (
@@ -194,7 +204,7 @@ export function ViewingBooking({ lot }: { lot: Lot }) {
             )
           })}
         </div>
-        <p className="text-sm text-muted-foreground">Просмотр длится около часа. Зачёркнутые слоты уже заняты.</p>
+        <p className="text-sm text-muted-foreground">Показ длится около часа. Зачёркнутые слоты уже заняты.</p>
       </Step>
 
       <Step n={3} title="Контактные данные">
@@ -249,11 +259,11 @@ export function ViewingBooking({ lot }: { lot: Lot }) {
               </span>
             </>
           ) : (
-            'Выберите время просмотра'
+            'Выберите время показа'
           )}
         </p>
         <Button type="submit" size="xl" disabled={!time}>
-          Записаться на просмотр
+          Записаться на показ
         </Button>
       </div>
     </form>

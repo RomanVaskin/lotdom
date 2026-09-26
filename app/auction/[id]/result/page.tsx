@@ -7,15 +7,14 @@ import { SiteHeader } from '@/components/lotdom/site-header'
 import { SiteFooter } from '@/components/lotdom/site-footer'
 import { StatusBadge } from '@/components/lotdom/status-badge'
 import { buttonVariants } from '@/components/ui/button'
-import { formatRub, lots } from '@/lib/lots'
+import { auctions, getAuction } from '@/lib/auctions'
+import { formatRub, getLotByAuction, manager } from '@/lib/lots'
 import { cn } from '@/lib/utils'
 
 export const metadata: Metadata = {
   title: 'Вы выиграли торги — ЛОТДОМ',
   description: 'Итоги торгов и следующие шаги до сделки.',
 }
-
-const result = { finalPrice: 47_250_000, bids: 23, participants: 8, closedAt: '27 сентября, 18:42' }
 
 const nextSteps = [
   {
@@ -32,10 +31,18 @@ const nextSteps = [
   },
 ]
 
+export function generateStaticParams() {
+  return Object.keys(auctions).map((id) => ({ id }))
+}
+
+export const dynamicParams = false
+
 export default async function AuctionResultPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const lot = lots.find((l) => l.auctionId === id)
-  if (!lot) notFound()
+  const auction = getAuction(id)
+  const lot = getLotByAuction(id)
+  if (!auction || !lot) notFound()
+  const { result } = auction
 
   return (
     <>
@@ -49,10 +56,10 @@ export default async function AuctionResultPage({ params }: { params: Promise<{ 
               Ваша ставка стала финальной для этого объекта.
             </p>
             <div className="flex flex-col gap-3 pt-2 sm:flex-row">
-              <Link href="#" className={cn(buttonVariants({ size: 'xl' }))}>
+              <a href={manager.phoneHref} className={cn(buttonVariants({ size: 'xl' }))}>
                 <Phone aria-hidden />
                 Связаться с менеджером
-              </Link>
+              </a>
               <Link
                 href={`/properties/${lot.slug}`}
                 className={cn(buttonVariants({ variant: 'outline', size: 'xl' }))}
@@ -61,8 +68,11 @@ export default async function AuctionResultPage({ params }: { params: Promise<{ 
               </Link>
             </div>
             <p className="text-sm text-muted-foreground">
-              Менеджер LotDom свяжется с вами в течение рабочего дня.
+              Менеджер LotDom свяжется с вами в течение рабочего дня. {manager.name}, {manager.phone}.
             </p>
+            <Link href="/buyer" className="self-start text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+              Перейти в кабинет покупателя
+            </Link>
           </div>
 
           <article className="overflow-hidden rounded-2xl bg-card ring-1 ring-border lg:col-span-7">

@@ -1,9 +1,10 @@
 'use client'
 
 import { useActionState } from 'react'
-import { CheckCircle2 } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowRight, CheckCircle2 } from 'lucide-react'
 import { submitApplication, type ApplicationState } from '@/app/sell/actions'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -13,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 
 const propertyTypes = [
   { value: 'apartment', label: 'Квартира' },
@@ -48,66 +50,18 @@ export function ApplicationForm() {
               className="flex flex-col items-start gap-4 rounded-xl bg-background p-8 ring-1 ring-border"
             >
               <CheckCircle2 aria-hidden className="size-6 text-brand" />
-              <h3 className="text-xl font-medium tracking-tight">
-                {state.name ? `${state.name}, заявка принята` : 'Заявка принята'}
-              </h3>
-              <p className="leading-relaxed text-muted-foreground">
-                Менеджер свяжется с вами по указанному телефону в течение рабочего дня.
-              </p>
+              <h3 className="text-xl font-medium tracking-tight">Заявка отправлена</h3>
+              <p className="leading-relaxed text-muted-foreground">Менеджер LotDom свяжется с вами.</p>
+              <Link
+                href="/seller"
+                className={cn(buttonVariants({ variant: 'outline', size: 'xl' }), 'mt-2')}
+              >
+                Перейти в кабинет продавца
+                <ArrowRight aria-hidden />
+              </Link>
             </div>
           ) : (
             <form action={formAction} className="grid gap-6 sm:grid-cols-2">
-              <div className="flex flex-col gap-2 sm:col-span-2">
-                <Label htmlFor="address">Адрес объекта</Label>
-                <Input
-                  id="address"
-                  name="address"
-                  placeholder="Москва, Хамовники, ул. Остоженка, 12"
-                  autoComplete="street-address"
-                  className={fieldClass}
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="type">Тип недвижимости</Label>
-                <Select name="type" items={propertyTypes}>
-                  <SelectTrigger id="type" className={`${fieldClass} w-full`}>
-                    <SelectValue placeholder="Выберите тип" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {propertyTypes.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="area">{'Площадь, м²'}</Label>
-                <Input
-                  id="area"
-                  name="area"
-                  type="number"
-                  inputMode="decimal"
-                  min={1}
-                  placeholder="120"
-                  className={fieldClass}
-                />
-              </div>
-
-              <div className="flex flex-col gap-2 sm:col-span-2">
-                <Label htmlFor="price">{'Желаемая стартовая цена, ₽'}</Label>
-                <Input
-                  id="price"
-                  name="price"
-                  inputMode="numeric"
-                  placeholder="40 000 000"
-                  className={fieldClass}
-                />
-              </div>
-
               <div className="flex flex-col gap-2">
                 <Label htmlFor="name">Имя</Label>
                 <Input id="name" name="name" autoComplete="name" placeholder="Анна" className={fieldClass} />
@@ -123,6 +77,55 @@ export function ApplicationForm() {
                   autoComplete="tel"
                   placeholder="+7 900 000-00-00"
                   className={fieldClass}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="type">Тип объекта</Label>
+                <Select name="type" items={propertyTypes}>
+                  <SelectTrigger id="type" className={`${fieldClass} w-full`}>
+                    <SelectValue placeholder="Выберите тип" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {propertyTypes.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="location">Локация</Label>
+                <Input
+                  id="location"
+                  name="location"
+                  placeholder="Москва, Хамовники"
+                  autoComplete="address-level2"
+                  className={fieldClass}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2 sm:col-span-2">
+                <Label htmlFor="market-value">{'Ориентировочная рыночная стоимость, ₽'}</Label>
+                <Input
+                  id="market-value"
+                  name="marketValue"
+                  inputMode="numeric"
+                  placeholder="45 000 000"
+                  className={fieldClass}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2 sm:col-span-2">
+                <Label htmlFor="comment">Комментарий</Label>
+                <textarea
+                  id="comment"
+                  name="comment"
+                  rows={3}
+                  placeholder="Площадь, состояние, сроки продажи"
+                  className="min-h-24 w-full rounded-lg border border-input bg-background px-3 py-2.5 text-base outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm"
                 />
               </div>
 

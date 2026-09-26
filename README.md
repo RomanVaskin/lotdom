@@ -31,3 +31,29 @@ To learn more, take a look at the following resources:
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 - [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
+
+## Frontend-прототип: маршруты
+
+Интерактивный прототип без backend: все данные — mock, состояния форм живут в браузере.
+
+| Маршрут | Экран |
+| --- | --- |
+| `/` | Главная |
+| `/properties` | Каталог лотов (`?stage=collecting\|viewings\|auction`) |
+| `/properties/[slug]` | Карточка объекта |
+| `/buyer/viewing?lot=[slug]` | Запись на показ → «Показ подтверждён» |
+| `/buyer/verification?lot=[slug]` | Подтверждение средств: не загружен → загружен → на проверке → пройдена |
+| `/auction/[id]` | Комната торгов (резерв не раскрывается, только «Условия продажи выполнены») |
+| `/auction/[id]/result` | Результат торгов (победитель) |
+| `/buyer` | Кабинет покупателя |
+| `/sell` | Продавцу + заявка |
+| `/seller`, `/seller/report` | Кабинет и отчёт продавца |
+| `/login` | Mock-вход: выбор роли |
+| `/admin`, `/admin/{objects,leads,buyers,viewings,auctions}` | Кабинет агентства |
+
+Источники mock-данных (одно место на сущность):
+
+- `lib/lots.ts` — лоты, этапы, воронка (`metrics`), менеджер объекта;
+- `lib/property.ts` — детали карточки объекта;
+- `lib/auctions.ts` — торги, ставки, итоги;
+- `lib/crm.ts` — лиды, показы, покупатели, отчёт продавца; `reservePrices` — только для admin.

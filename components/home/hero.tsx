@@ -24,7 +24,7 @@ export function Hero() {
             Продать объект
             <ArrowRight aria-hidden />
           </Link>
-          <Link href="#lots" className={cn(buttonVariants({ size: 'xl', variant: 'outline' }))}>
+          <Link href="/properties" className={cn(buttonVariants({ size: 'xl', variant: 'outline' }))}>
             Смотреть лоты
           </Link>
         </div>

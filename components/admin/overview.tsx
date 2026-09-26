@@ -1,7 +1,9 @@
+import Link from 'next/link'
 import { Lock, Plus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 import { StatusBadge } from '@/components/lotdom/status-badge'
-import type { LotStage } from '@/lib/lots'
+import { nextActions, reservePrices, sellerReport } from '@/lib/crm'
+import { formatRub, lotShortName, lots, type Lot, type LotStage } from '@/lib/lots'
 import { cn } from '@/lib/utils'
 
 const kpis = [
@@ -27,23 +29,6 @@ export function Kpis() {
   )
 }
 
-type Row = {
-  name: string
-  stage: LotStage
-  stageLabel?: string
-  leads: number
-  viewings: number
-  admitted: number
-  next: string
-  selected?: boolean
-}
-
-const rows: Row[] = [
-  { name: 'Новая Рига, дом 240 м²', stage: 'collecting', stageLabel: 'Сбор', leads: 18, viewings: 7, admitted: 4, next: 'Показ 29.09', selected: true },
-  { name: 'Хамовники, 118 м²', stage: 'auction', stageLabel: 'Торги', leads: 24, viewings: 11, admitted: 8, next: 'Итоги торгов' },
-  { name: 'Раменки, 86 м²', stage: 'viewings', stageLabel: 'Показы', leads: 13, viewings: 5, admitted: 3, next: 'Проверка документов' },
-]
-
 export function ObjectsTable() {
   return (
     <div className="overflow-x-auto rounded-xl bg-card ring-1 ring-border">
@@ -59,22 +44,26 @@ export function ObjectsTable() {
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
+          {lots.map((lot, i) => (
             <tr
-              key={r.name}
+              key={lot.slug}
               className={cn(
                 'border-b border-border last:border-b-0 hover:bg-muted/50',
-                r.selected && 'bg-muted/60 shadow-[inset_2px_0_0_var(--foreground)]',
+                i === 0 && 'bg-muted/60 shadow-[inset_2px_0_0_var(--foreground)]',
               )}
             >
-              <th scope="row" className="px-5 py-3.5 text-left font-medium">{r.name}</th>
+              <th scope="row" className="px-5 py-3.5 text-left font-medium">
+                <Link href={`/admin/objects#${lot.slug}`} className="hover:underline">
+                  {lotShortName(lot)}
+                </Link>
+              </th>
               <td className="px-5 py-3.5">
-                <StatusBadge stage={r.stage} label={r.stageLabel} />
+                <StatusBadge stage={lot.stage} label={shortStage[lot.stage]} />
               </td>
-              <td className="tabular px-5 py-3.5 text-right">{r.leads}</td>
-              <td className="tabular px-5 py-3.5 text-right">{r.viewings}</td>
-              <td className="tabular px-5 py-3.5 text-right">{r.admitted}</td>
-              <td className="px-5 py-3.5 text-muted-foreground">{r.next}</td>
+              <td className="tabular px-5 py-3.5 text-right">{lot.metrics.leads}</td>
+              <td className="tabular px-5 py-3.5 text-right">{lot.metrics.viewings}</td>
+              <td className="tabular px-5 py-3.5 text-right">{lot.metrics.admitted}</td>
+              <td className="px-5 py-3.5 text-muted-foreground">{nextActions[lot.slug]}</td>
             </tr>
           ))}
         </tbody>
@@ -83,15 +72,17 @@ export function ObjectsTable() {
   )
 }
 
-const funnel = [
-  { label: 'Лидов', value: 24 },
-  { label: 'Квалифицировано', value: 19 },
-  { label: 'Показов', value: 14 },
-  { label: 'Подали документы', value: 11 },
-  { label: 'Допущено', value: 8 },
-]
+const shortStage: Partial<Record<LotStage, string>> = { collecting: 'Сбор', auction: 'Торги' }
 
-export function Funnel() {
+export function Funnel({ lot }: { lot: Lot }) {
+  const m = lot.metrics
+  const funnel = [
+    { label: 'Лидов', value: m.leads },
+    { label: 'Квалифицировано', value: m.qualified },
+    { label: 'Показов', value: m.viewings },
+    { label: 'Подали документы', value: m.documents },
+    { label: 'Допущено', value: m.admitted },
+  ]
   const max = funnel[0].value
   return (
     <ol className="flex flex-col gap-3">
@@ -118,19 +109,19 @@ export function Funnel() {
   )
 }
 
-export function SaleParams() {
+export function SaleParams({ lot }: { lot: Lot }) {
   return (
     <div className="flex flex-col gap-6 rounded-xl bg-card p-6 ring-1 ring-border">
       <h3 className="font-medium">Параметры продажи</h3>
       <dl className="flex flex-col">
         <div className="flex items-baseline justify-between gap-4 border-b border-border py-3">
           <dt className="text-sm text-muted-foreground">Стартовая цена</dt>
-          <dd className="tabular font-medium">{'38\u00a0000\u00a0000\u00a0₽'}</dd>
+          <dd className="tabular font-medium">{formatRub(lot.startPrice)}</dd>
         </div>
         <div className="flex flex-col gap-2 border-b border-border py-3">
           <div className="flex items-baseline justify-between gap-4">
             <dt className="text-sm text-muted-foreground">Резервная цена</dt>
-            <dd className="tabular font-medium">{'44\u00a0000\u00a0000\u00a0₽'}</dd>
+            <dd className="tabular font-medium">{formatRub(reservePrices[lot.slug])}</dd>
           </div>
           <span className="inline-flex w-fit items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
             <Lock aria-hidden className="size-3" />
@@ -139,17 +130,17 @@ export function SaleParams() {
         </div>
         <div className="flex items-baseline justify-between gap-4 py-3">
           <dt className="text-sm text-muted-foreground">Контрольная точка</dt>
-          <dd className="font-medium">30 сентября</dd>
+          <dd className="font-medium">{sellerReport.checkpoint}</dd>
         </div>
       </dl>
       <div className="mt-auto flex flex-col gap-2">
-        <Button size="xl" className="w-full">
+        <Link href="/admin/viewings" className={cn(buttonVariants({ size: 'xl' }), 'w-full')}>
           <Plus aria-hidden />
           Назначить показ
-        </Button>
-        <Button size="xl" variant="outline" className="w-full">
+        </Link>
+        <Link href="/admin/buyers" className={cn(buttonVariants({ size: 'xl', variant: 'outline' }), 'w-full')}>
           Допустить к торгам
-        </Button>
+        </Link>
       </div>
     </div>
   )

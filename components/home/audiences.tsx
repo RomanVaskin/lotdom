@@ -37,7 +37,7 @@ export function Audiences() {
             ))}
           </ul>
           <Link
-            href="#"
+            href="/sell#application"
             className={cn(
               buttonVariants({ size: 'xl' }),
               'mt-auto w-fit bg-background text-foreground [a]:hover:bg-background/90',
@@ -68,7 +68,7 @@ export function Audiences() {
             ))}
           </ol>
           <Link
-            href="#lots"
+            href="/properties"
             className={cn(buttonVariants({ size: 'xl', variant: 'outline' }), 'mt-auto w-fit')}
           >
             Смотреть лоты

@@ -2,11 +2,10 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowUpRight } from 'lucide-react'
 import { StatusBadge } from './status-badge'
-import { formatRub, type Lot } from '@/lib/lots'
+import { formatRub, lotHref, type Lot } from '@/lib/lots'
 
 export function LotCard({ lot }: { lot: Lot }) {
-  const href =
-    lot.stage === 'auction' && lot.auctionId ? `/auction/${lot.auctionId}` : `/properties/${lot.slug}`
+  const href = lotHref(lot)
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-xl bg-card ring-1 ring-border transition-shadow hover:shadow-[0_12px_40px_-16px_oklch(0.22_0.012_250/0.25)]">

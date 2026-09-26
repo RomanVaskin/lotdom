@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { CheckCircle2, Clock, ShieldCheck } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import Link from 'next/link'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { formatRub } from '@/lib/lots'
 import { ANTI_SNIPING_SECONDS, type Auction, type Bid } from '@/lib/auctions'
 import { cn } from '@/lib/utils'
@@ -49,16 +50,16 @@ export function AuctionRoom({ auction }: { auction: Auction }) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-12">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
       {/* Live console */}
       <section
         aria-label="Ход торгов"
-        className="flex flex-col gap-10 rounded-2xl bg-foreground p-6 text-background md:p-10 lg:col-span-8"
+        className="flex min-w-0 flex-col gap-10 rounded-2xl bg-foreground p-6 text-background md:p-10 lg:col-span-8"
       >
         <div className="flex flex-col gap-3">
           <p className="text-sm text-background/60">Текущая ставка</p>
           <p
-            className="tabular text-5xl font-medium leading-none tracking-tight md:text-7xl"
+            className="tabular text-4xl font-medium leading-none tracking-tight sm:text-5xl md:text-7xl"
             aria-live="polite"
           >
             {formatRub(current)}
@@ -74,15 +75,17 @@ export function AuctionRoom({ auction }: { auction: Auction }) {
           </p>
         </div>
 
-        <p className="flex items-start gap-3 rounded-xl bg-background/[0.06] p-4 text-sm leading-relaxed ring-1 ring-background/10">
-          <CheckCircle2 aria-hidden className="mt-0.5 size-4 shrink-0 text-brand-soft" />
-          <span>
-            <span className="font-medium">Условия продажи выполнены.</span>{' '}
-            <span className="text-background/70">Торги продолжаются.</span>
-          </span>
-        </p>
+        {auction.reserveMet && (
+          <p className="flex items-start gap-3 rounded-xl bg-background/[0.06] p-4 text-sm leading-relaxed ring-1 ring-background/10">
+            <CheckCircle2 aria-hidden className="mt-0.5 size-4 shrink-0 text-brand-soft" />
+            <span>
+              <span className="font-medium">Условия продажи выполнены.</span>{' '}
+              <span className="text-background/70">Торги продолжаются.</span>
+            </span>
+          </p>
+        )}
 
-        <dl className="grid grid-cols-3 gap-px overflow-hidden rounded-xl bg-background/10">
+        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-background/10 md:grid-cols-4">
           <div className="flex flex-col gap-2 bg-foreground p-4 md:p-5">
             <dt className="text-xs text-background/60">До окончания</dt>
             <dd
@@ -93,10 +96,15 @@ export function AuctionRoom({ auction }: { auction: Auction }) {
             >
               <time>{formatClock(secondsLeft)}</time>
             </dd>
+            <dd className="text-xs text-background/50">до {auction.endsAt}</dd>
           </div>
           <div className="flex flex-col gap-2 bg-foreground p-4 md:p-5">
             <dt className="text-xs text-background/60">Участников</dt>
             <dd className="tabular text-2xl font-medium md:text-3xl">{auction.participants}</dd>
+          </div>
+          <div className="flex flex-col gap-2 bg-foreground p-4 md:p-5">
+            <dt className="text-xs text-background/60">Ставок</dt>
+            <dd className="tabular text-2xl font-medium md:text-3xl">{bids.length}</dd>
           </div>
           <div className="flex flex-col gap-2 bg-foreground p-4 md:p-5">
             <dt className="text-xs text-background/60">Шаг ставки</dt>
@@ -154,9 +162,16 @@ export function AuctionRoom({ auction }: { auction: Auction }) {
         <p className="mt-auto flex gap-2.5 text-sm leading-relaxed text-muted-foreground">
           <Clock aria-hidden className="mt-0.5 size-4 shrink-0" />
           {extended
-            ? 'Время продлено до 5 минут: ставка сделана в последние минуты торгов.'
-            : 'Если ставка сделана в последние 5 минут, время торгов продлевается.'}
+            ? 'Торги продлены на 5 минут: ставка сделана в последние 5 минут.'
+            : 'Ставка в последние 5 минут продлевает торги на 5 минут.'}
         </p>
+
+        <Link
+          href={`/auction/${auction.id}/result`}
+          className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'self-start text-muted-foreground')}
+        >
+          Показать итог торгов (демо)
+        </Link>
       </section>
 
       {/* History */}
@@ -165,7 +180,7 @@ export function AuctionRoom({ auction }: { auction: Auction }) {
           <h2 className="text-xl font-medium tracking-tight">История ставок</h2>
           <span className="text-sm text-muted-foreground">{bids.length} ставок</span>
         </div>
-        <div className="overflow-hidden rounded-xl bg-card ring-1 ring-border">
+        <div className="overflow-x-auto rounded-xl bg-card ring-1 ring-border">
           <table className="w-full text-sm">
             <thead className="border-b border-border text-left text-xs text-muted-foreground">
               <tr>
@@ -212,6 +227,7 @@ export function AuctionRoom({ auction }: { auction: Auction }) {
             'Участвуют только покупатели, прошедшие показ и проверку',
             'Участники видят только номера, без персональных данных',
             'Резервная цена продавца не раскрывается',
+            'Ставка в последние 5 минут продлевает торги на 5 минут',
             'Победитель подписывает предварительный договор в течение 3 дней',
           ].map((r) => (
             <li key={r} className="border-b border-border py-2.5 text-muted-foreground first:pt-0 last:border-b-0 last:pb-0">

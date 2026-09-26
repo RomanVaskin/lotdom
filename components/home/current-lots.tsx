@@ -1,3 +1,5 @@
+import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 import { LotCard } from '@/components/lotdom/lot-card'
 import { lots } from '@/lib/lots'
 
@@ -15,6 +17,13 @@ export function CurrentLots() {
           <LotCard key={lot.slug} lot={lot} />
         ))}
       </div>
+      <Link
+        href="/properties"
+        className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+      >
+        Все лоты
+        <ArrowRight aria-hidden className="size-4" />
+      </Link>
     </section>
   )
 }

@@ -1,23 +1,28 @@
 import Link from 'next/link'
 import { CalendarDays } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
+import { formatNumber, manager, type LotMetrics } from '@/lib/lots'
 import { cn } from '@/lib/utils'
 
-const kpis = [
-  { label: 'Просмотры карточки', value: '8 420', delta: '+12% к прошлой неделе' },
-  { label: 'Новые лиды', value: '24', delta: '+18%' },
-  { label: 'Квалифицированы', value: '14', delta: '58% от лидов' },
-  { label: 'Проведено показов', value: '11', delta: '3 запланировано' },
-  { label: 'Допущены к торгам', value: '8', delta: 'Цель — от 5' },
-]
+function kpisFor(m: LotMetrics) {
+  return [
+    { label: 'Просмотры карточки', value: formatNumber(m.views), delta: '+12% к прошлой неделе' },
+    { label: 'Новые лиды', value: String(m.leads), delta: '+18%' },
+    { label: 'Квалифицированы', value: String(m.qualified), delta: `${Math.round((m.qualified / m.leads) * 100)}% от лидов` },
+    { label: 'Проведено показов', value: String(m.viewings), delta: `${m.viewingsPlanned} запланировано` },
+    { label: 'Допущены к торгам', value: String(m.admitted), delta: 'Цель — от 5' },
+  ]
+}
 
-const funnel = [
-  { label: 'Новые лиды', value: 24 },
-  { label: 'Связались', value: 19 },
-  { label: 'Квалифицированы', value: 14 },
-  { label: 'Показ', value: 11 },
-  { label: 'Допущены', value: 8 },
-]
+function funnelFor(m: LotMetrics) {
+  return [
+    { label: 'Новые лиды', value: m.leads },
+    { label: 'Связались', value: m.contacted },
+    { label: 'Квалифицированы', value: m.qualified },
+    { label: 'Показ', value: m.viewings },
+    { label: 'Допущены', value: m.admitted },
+  ]
+}
 
 const dailyLeads = [1, 2, 1, 2, 1, 3, 1, 2, 1, 2, 3, 2, 1, 2]
 
@@ -56,7 +61,8 @@ function Panel({
   )
 }
 
-export function KpiRow() {
+export function KpiRow({ metrics }: { metrics: LotMetrics }) {
+  const kpis = kpisFor(metrics)
   return (
     <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-border ring-1 ring-border md:grid-cols-5">
       {kpis.map((k, i) => (
@@ -73,12 +79,17 @@ export function KpiRow() {
   )
 }
 
-export function Funnel() {
+export function Funnel({ metrics }: { metrics: LotMetrics }) {
+  const funnel = funnelFor(metrics)
   const max = funnel[0].value
   return (
     <Panel
       title="Воронка покупателей"
-      aside={<span className="text-sm text-muted-foreground">Конверсия в допуск — 33%</span>}
+      aside={
+        <span className="text-sm text-muted-foreground">
+          Конверсия в допуск — {Math.round((metrics.admitted / metrics.leads) * 100)}%
+        </span>
+      }
       className="lg:col-span-7"
     >
       <ol className="flex flex-col gap-4">
@@ -184,7 +195,7 @@ export function Sources() {
   )
 }
 
-export function NextCheckpoint() {
+export function NextCheckpoint({ date }: { date: string }) {
   return (
     <div className="flex flex-col gap-4 lg:col-span-7">
       <section
@@ -198,7 +209,7 @@ export function NextCheckpoint() {
           <h2 id="checkpoint-title" className="text-sm text-muted-foreground">
             Следующая контрольная точка
           </h2>
-          <p className="text-xl font-medium tracking-tight">30 сентября</p>
+          <p className="text-xl font-medium tracking-tight">{date}</p>
           <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
             На следующей контрольной точке оцениваем динамику спроса и принимаем решение о следующем этапе.
           </p>
@@ -217,24 +228,24 @@ export function NextCheckpoint() {
           <p className="text-pretty text-2xl font-medium leading-snug tracking-tight">
             Спрос устойчивый. Рекомендуем продолжить текущую стратегию и подготовить объект к переходу в торги.
           </p>
-          <p className="text-sm text-background/60">Анна Соколова, менеджер объекта</p>
+          <p className="text-sm text-background/60">{manager.name}, менеджер объекта</p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
           <Link
-            href="#"
+            href="/seller?strategy=confirmed"
             className={cn(buttonVariants({ size: 'xl' }), 'bg-background text-foreground [a]:hover:bg-background/90')}
           >
             Продолжить стратегию
           </Link>
-          <Link
-            href="#"
+          <a
+            href={manager.phoneHref}
             className={cn(
               buttonVariants({ variant: 'outline', size: 'xl' }),
               'border-background/25 bg-transparent text-background hover:bg-background/10 hover:text-background',
             )}
           >
             Обсудить с менеджером
-          </Link>
+          </a>
         </div>
       </section>
     </div>

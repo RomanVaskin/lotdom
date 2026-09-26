@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import { SiteHeader } from '@/components/lotdom/site-header'
 import { SiteFooter } from '@/components/lotdom/site-footer'
@@ -14,31 +15,50 @@ import {
   Section,
   Specs,
 } from '@/components/property/sections'
-import { property } from '@/lib/property'
+import { getAuction } from '@/lib/auctions'
+import { STAGE_LABEL, formatRub, getLot, lots } from '@/lib/lots'
+import { getProperty } from '@/lib/property'
 
-export const metadata: Metadata = {
-  title: 'Современный дом, Новая Рига — ЛОТДОМ',
-  description: '240 м², 15 соток, 4 спальни. Стартовая цена 38 000 000 ₽. Сбор покупателей.',
+type Params = { params: Promise<{ slug: string }> }
+
+export function generateStaticParams() {
+  return lots.map((l) => ({ slug: l.slug }))
 }
 
-export default async function PropertyPage({ params }: { params: Promise<{ slug: string }> }) {
-  await params
-  const p = property
+export const dynamicParams = false
+
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  const { slug } = await params
+  const lot = getLot(slug)
+  const p = getProperty(slug)
+  if (!lot || !p) return {}
+  return {
+    title: `${lot.type}, ${lot.location} — ЛОТДОМ`,
+    description: `${p.headline}. Стартовая цена ${formatRub(lot.startPrice)}. ${STAGE_LABEL[lot.stage]}.`,
+  }
+}
+
+export default async function PropertyPage({ params }: Params) {
+  const { slug } = await params
+  const lot = getLot(slug)
+  const p = getProperty(slug)
+  if (!lot || !p) notFound()
+  const auction = lot.auctionId ? getAuction(lot.auctionId) : undefined
 
   return (
     <>
       <SiteHeader />
       <main className="mx-auto max-w-7xl px-5 pb-24 pt-8 md:px-8">
-        <Link href="/#lots" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <Link href="/properties" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ChevronLeft aria-hidden className="size-4" />
           Все лоты
         </Link>
 
         <div className="mt-6 flex flex-col gap-2">
-          <p className="text-sm text-muted-foreground">{p.type}</p>
+          <p className="text-sm text-muted-foreground">{lot.type}</p>
           <h1 className="text-balance text-4xl font-medium tracking-tight md:text-5xl">
-            {p.location}
-            <span className="text-muted-foreground">{' · 240 м² · 15 соток · 4 спальни'}</span>
+            {lot.location}
+            <span className="text-muted-foreground">{` · ${p.headline}`}</span>
           </h1>
         </div>
 
@@ -52,34 +72,30 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
 
             <Section title="Об объекте">
               <div className="flex max-w-2xl flex-col gap-4 leading-relaxed text-muted-foreground">
-                <p>
-                  Двухэтажный дом из клеёного бруса на последней линии посёлка у Новорижского шоссе.
-                  Панорамное остекление гостиной выходит прямо в сосновый лес — участок граничит с
-                  лесным массивом, соседей с этой стороны нет.
-                </p>
-                <p>
-                  Дом полностью готов к проживанию: чистовая отделка, кухня, встроенные шкафы, тёплые
-                  полы и система вентиляции. На первом этаже — гостиная-столовая со вторым светом,
-                  кабинет и гостевая спальня; на втором — три спальни, включая мастер-спальню с
-                  гардеробной.
-                </p>
+                {p.description.map((text) => (
+                  <p key={text}>{text}</p>
+                ))}
               </div>
             </Section>
 
             <Section title="Почему стоит посмотреть">
-              <Reasons />
+              <Reasons items={p.reasons} />
             </Section>
 
-            <Section title="Галерея">
-              <PhotoStrip photos={p.photos} />
-            </Section>
+            {p.photos.length > 1 && (
+              <Section id="gallery" title="Галерея">
+                <PhotoStrip photos={p.photos} />
+              </Section>
+            )}
 
-            <Section title="Планировка">
-              <FloorPlan />
-            </Section>
+            {p.floorPlan && (
+              <Section title="Планировка">
+                <FloorPlan plan={p.floorPlan} />
+              </Section>
+            )}
 
             <Section title="Район">
-              <LocationBlock address={p.address} />
+              <LocationBlock address={p.address} label={lot.location} nearby={p.nearby} />
             </Section>
 
             <Section title="Как попасть на торги">
@@ -88,13 +104,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
           </div>
 
           <div className="lg:col-span-4">
-            <InfoPanel
-              startPrice={p.startPrice}
-              interested={p.interested}
-              nextViewing={p.nextViewing}
-              auctionDate={p.auctionDate}
-              auctionHref={`/auction/${p.auctionId}`}
-            />
+            <InfoPanel lot={lot} auctionEndsAt={auction?.endsAt} participants={auction?.participants} />
           </div>
         </div>
       </main>

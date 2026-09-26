@@ -1,5 +1,12 @@
 export type Bid = { participant: number; amount: number; time: string }
 
+export type AuctionResult = {
+  finalPrice: number
+  bids: number
+  participants: number
+  closedAt: string
+}
+
 export type Auction = {
   id: string
   propertySlug: string
@@ -11,8 +18,13 @@ export type Auction = {
   step: number
   participants: number
   secondsLeft: number
+  /** Human-readable end time; the countdown above is mock. */
+  endsAt: string
+  /** Only the fact that the seller's reserve is reached is public — never the amount. */
+  reserveMet: boolean
   me: number
   bids: Bid[]
+  result: AuctionResult
 }
 
 export const auctions: Record<string, Auction> = {
@@ -27,6 +39,8 @@ export const auctions: Record<string, Auction> = {
     step: 250_000,
     participants: 8,
     secondsLeft: 42 * 60 + 17,
+    endsAt: '3 октября, 18:00',
+    reserveMet: true,
     me: 5,
     bids: [
       { participant: 3, amount: 46_250_000, time: '14:32' },
@@ -37,6 +51,7 @@ export const auctions: Record<string, Auction> = {
       { participant: 5, amount: 44_500_000, time: '14:03' },
       { participant: 7, amount: 43_750_000, time: '13:52' },
     ],
+    result: { finalPrice: 47_250_000, bids: 23, participants: 8, closedAt: '3 октября, 18:42' },
   },
   'hm-118': {
     id: 'hm-118',
@@ -49,6 +64,8 @@ export const auctions: Record<string, Auction> = {
     step: 500_000,
     participants: 6,
     secondsLeft: 1 * 3600 + 8 * 60 + 40,
+    endsAt: '26 сентября, 16:00',
+    reserveMet: false,
     me: 4,
     bids: [
       { participant: 2, amount: 78_500_000, time: '14:30' },
@@ -57,7 +74,12 @@ export const auctions: Record<string, Auction> = {
       { participant: 2, amount: 76_000_000, time: '13:55' },
       { participant: 3, amount: 74_500_000, time: '13:40' },
     ],
+    result: { finalPrice: 80_500_000, bids: 14, participants: 6, closedAt: '26 сентября, 16:10' },
   },
+}
+
+export function getAuction(id: string): Auction | undefined {
+  return auctions[id]
 }
 
 export const ANTI_SNIPING_SECONDS = 5 * 60
