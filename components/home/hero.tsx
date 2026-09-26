@@ -20,7 +20,7 @@ export function Hero() {
           заинтересованными участниками.
         </p>
         <div className="flex flex-wrap gap-3">
-          <Link href="#sell" className={cn(buttonVariants({ size: 'xl' }))}>
+          <Link href="/sell" className={cn(buttonVariants({ size: 'xl' }))}>
             Продать объект
             <ArrowRight aria-hidden />
           </Link>

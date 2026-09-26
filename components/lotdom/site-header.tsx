@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 
 const nav = [
   { href: '/#lots', label: 'Лоты' },
-  { href: '/#sell', label: 'Продать объект' },
+  { href: '/sell', label: 'Продать объект' },
   { href: '/#how', label: 'Как это работает' },
 ]
 
